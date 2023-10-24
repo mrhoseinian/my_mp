@@ -49,7 +49,7 @@ def DotProductStomp(ts,m,dot_first,dot_prev,order):
 
     return dot
 
-def massStomp(query,ts,dot_first,dot_prev,index,mean,std):
+def massStomp(query,ts,dot_first,dot_prev,index,mean,std, z_norm=True):
     """
     Calculates Mueen's ultra-fast Algorithm for Similarity Search (MASS) between a query and timeseries using the STOMP dot product speedup. Note that we are returning the square of MASS.
 
@@ -67,7 +67,10 @@ def massStomp(query,ts,dot_first,dot_prev,index,mean,std):
     dot = DotProductStomp(ts,m,dot_first,dot_prev,index)
 
     #Return both the MASS calcuation and the dot product
-    res = 2*m*(1-(dot-m*mean[index]*mean)/(m*std[index]*std))
+    if z_norm:
+        res = 2*m*(1-(dot-m*mean[index]*mean)/(m*std[index]*std))
+    else:
+        res = 2*m*(1-(dot)/(m*mean[index]))
 
     return res, dot
 
@@ -136,7 +139,7 @@ def movmeanstd(ts,m):
     movstd = np.sqrt(segSumSq / m - (segSum/m) ** 2)
 
     return [movmean,movstd]
-def mass(query,ts):
+def mass(query,ts, z_norm=True):
     """
     Calculates Mueen's ultra-fast Algorithm for Similarity Search (MASS): a Euclidian distance similarity search algorithm. Note that we are returning the square of MASS.
 
@@ -153,13 +156,16 @@ def mass(query,ts):
     mean, std = movmeanstd(ts,m)
     dot = slidingDotProduct(query,ts)
 
-    #res = np.sqrt(2*m*(1-(dot-m*mean*q_mean)/(m*std*q_std)))
-    res = 2*m*(1-(dot-m*mean*q_mean)/(m*std*q_std))
+    if z_norm:
+        res = np.sqrt(2*m*(1-(dot-m*mean*q_mean)/(m*std*q_std)))
+    else:
+        res = np.sqrt(2*m*(1-(dot-m*q_mean)/m))
+
 
 
     return res
 
-def STOMPDistanceProfile(tsA,idx,m,dot_first,dp,mean,std):
+def STOMPDistanceProfile(tsA,idx,m,dot_first,dp,mean,std, z_norm=True):
     """
     Returns the distance profile of a query within tsA against the time series tsB using the even more efficient iterative STOMP calculation. Note that the method requires a pre-calculated 'initial' sliding dot product.
 
@@ -181,14 +187,14 @@ def STOMPDistanceProfile(tsA,idx,m,dot_first,dp,mean,std):
 
     #Calculate the first distance profile via MASS
     if idx == 0:
-        distanceProfile = np.real(np.sqrt(mass(query,tsA).astype(complex)))
+        distanceProfile = np.real(np.sqrt(mass(query,tsA, z_norm).astype(complex)))
 
         #Currently re-calculating the dot product separately as opposed to updating all of the mass function...
         dot = slidingDotProduct(query,tsA)
 
     #Calculate all subsequent distance profiles using the STOMP dot product shortcut
     else:
-        res, dot = massStomp(query,tsA,dot_first,dp,idx,mean,std)
+        res, dot = massStomp(query,tsA,dot_first,dp,idx,mean,std, z_norm)
         distanceProfile = np.real(np.sqrt(res.astype(complex)))
 
 
@@ -199,7 +205,7 @@ def STOMPDistanceProfile(tsA,idx,m,dot_first,dp,mean,std):
     #Both the distance profile and corresponding matrix profile index (which should just have the current index)
     return (distanceProfile[idx:],np.full(n-m+1,idx,dtype=float)), dot
 
-def _matrixProfile_stomp(tsA,m,orderClass,distanceProfileFunction):
+def _matrixProfile_stomp(tsA,m,orderClass,distanceProfileFunction, z_norm=True):
     order = orderClass(len(tsA)-m+1)
     n = len(tsA)
     shape = n - m + 1
@@ -223,7 +229,7 @@ def _matrixProfile_stomp(tsA,m,orderClass,distanceProfileFunction):
     while idx != None:
 
         #Need to pass in the previous sliding dot product for subsequent distance profile calculations
-        (distanceProfile,querySegmentsID),dot_prev = distanceProfileFunction(tsA,idx,m,dot_first,dp,mean,std)
+        (distanceProfile,querySegmentsID),dot_prev = distanceProfileFunction(tsA,idx,m,dot_first,dp,mean,std, z_norm)
 
         if idx == 0:
             dot_first = dot_prev
@@ -246,7 +252,7 @@ def _matrixProfile_stomp(tsA,m,orderClass,distanceProfileFunction):
         dp = dot_prev
     return (mp,mpIndex)
 
-def stomp(tsA,m):
+def stomp(tsA,m, z_norm=True):
     """
     Calculate the Matrix Profile using the more efficient MASS calculation. Distance profiles are computed according to the directed STOMP procedure.
 
@@ -255,4 +261,4 @@ def stomp(tsA,m):
     tsA: Time series containing the queries for which to calculate the Matrix Profile.
     m: Length of subsequence to compare.
     """
-    return _matrixProfile_stomp(tsA,m,linearOrder,STOMPDistanceProfile)
+    return _matrixProfile_stomp(tsA,m,linearOrder,STOMPDistanceProfile, z_norm)
