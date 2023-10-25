@@ -159,7 +159,7 @@ def mass(query,ts, z_norm=True):
     if z_norm:
         res = 2*m*(1-(dot-m*mean*q_mean)/(m*std*q_std))
     else:
-        res = 2*m*(1-(dot-m*q_mean)/m)
+        res = 2*m*(1-(dot-m*mean*q_mean)/m)
 
 
 
