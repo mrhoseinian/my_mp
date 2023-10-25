@@ -70,7 +70,13 @@ def massStomp(query,ts,dot_first,dot_prev,index,mean,std, z_norm=True):
     if z_norm:
         res = 2*m*(1-(dot-m*mean[index]*mean)/(m*std[index]*std))
     else:
-        res = 2*m*(1-(dot-m*mean[index]*mean)/m)
+        q_zero_mean = query - mean[index]
+        # Compute squared distance using convolution.
+        squared_distance = np.convolve(ts**2, np.ones(m), mode='valid') - 2 * np.convolve(ts, q_zero_mean[::-1], mode='valid') + np.sum(q_zero_mean**2)
+        # Adjust for the zero-meaning of the time series windows.
+        squared_distance += m * mean**2
+        squared_distance -= 2 * m * mean * mean[index]
+        res = squared_distance
 
     return res, dot
 
@@ -159,9 +165,13 @@ def mass(query,ts, z_norm=True):
     if z_norm:
         res = 2*m*(1-(dot-m*mean*q_mean)/(m*std*q_std))
     else:
-        res = 2*m*(1-(dot-m*mean*q_mean)/m)
-
-
+        q_zero_mean = query - q_mean
+        # Compute squared distance using convolution.
+        squared_distance = np.convolve(ts**2, np.ones(m), mode='valid') - 2 * np.convolve(ts, q_zero_mean[::-1], mode='valid') + np.sum(q_zero_mean**2)
+        # Adjust for the zero-meaning of the time series windows.
+        squared_distance += m * mean**2
+        squared_distance -= 2 * m * mean * q_mean
+        res = squared_distance
 
     return res
 
