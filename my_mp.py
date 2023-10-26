@@ -211,7 +211,7 @@ def STOMPDistanceProfile(tsA,idx,m,dot_first,dp,mean,std, z_norm=True):
 
 
 
-    trivialMatchRange = (int(max(0,idx - np.round(m/2,0))),int(min(idx + np.round(m/2+1,0),n)))
+    trivialMatchRange = (int(max(0,idx - np.round(m/4,0))),int(min(idx + np.round(m/4+1,0),n)))
     distanceProfile[trivialMatchRange[0]:trivialMatchRange[1]] = np.inf
 
     #Both the distance profile and corresponding matrix profile index (which should just have the current index)
