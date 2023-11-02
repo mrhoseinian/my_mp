@@ -271,10 +271,10 @@ def _matrixProfile_stomp(
 
         # Update only the current index using the minimum value from the distanceProfile
         min_idx = idx + np.argmin(distanceProfile)
-        mp[idx] = (
+        mp[idx] = np.min(distanceProfile)
+        mpIndex[idx] = (
             n - m + 1 - min_idx if reverse else min_idx
         )  # Adjust index if reversed
-        mpIndex[idx] = min_idx
 
         idx = order.next()
 
