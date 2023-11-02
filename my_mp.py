@@ -279,6 +279,8 @@ def _matrixProfile_stomp(
         idx = order.next()
 
         dp = dot_prev
+    if reverse: 
+        mp = mp[::-1]
     return (mp, mpIndex)
 
 
