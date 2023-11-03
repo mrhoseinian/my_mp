@@ -279,6 +279,7 @@ def _matrixProfile_stomp(
         dp = dot_prev
     if reverse: 
         mp = mp[::-1]
+        mpIndex = mpIndex[::-1]
         mpIndex = n + m - 1 - mpIndex
     return (mp, mpIndex)
 
