@@ -280,7 +280,8 @@ def _matrixProfile_stomp(
     if reverse: 
         mp = mp[::-1]
         mpIndex = mpIndex[::-1]
-        mpIndex = n - m + 1 - mpIndex
+        # mpIndex = n - m + 1 - mpIndex
+        mpIndex = n - m - mpIndex
     return (mp, mpIndex)
 
 
