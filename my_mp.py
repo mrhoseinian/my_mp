@@ -260,7 +260,7 @@ def _matrixProfile_stomp(
     # Initialize dot_first to None for the first pass
     dot_first = None
 
-    while idx is not None:
+    while idx != None:
         # Need to pass in the previous sliding dot product for subsequent distance profile calculations
         (distanceProfile, querySegmentsID), dot_prev = distanceProfileFunction(
             tsA, idx, m, dot_first, dp, mean, std, z_norm
@@ -272,15 +272,14 @@ def _matrixProfile_stomp(
         # Update only the current index using the minimum value from the distanceProfile
         min_idx = idx + np.argmin(distanceProfile)
         mp[idx] = np.min(distanceProfile)
-        mpIndex[idx] = (
-            n - m + 1 - min_idx if reverse else min_idx
-        )  # Adjust index if reversed
+        mpIndex[idx] = min_idx
 
         idx = order.next()
 
         dp = dot_prev
     if reverse: 
         mp = mp[::-1]
+        mpIndex = n + m - 1 - mpIndex
     return (mp, mpIndex)
 
 
